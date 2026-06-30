@@ -4,8 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .base import Base
 
 class Club(Base):
-    __tablename__ = "clubs"
-
+__tablename__ = "clubs"
     id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True
