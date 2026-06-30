@@ -4,29 +4,17 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .base import Base
 
 class Club(Base):
-__tablename__ = "clubs"
-    id: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True
-    )
+    __tablename__ = "clubs"
 
-    name: Mapped[str] = mapped_column(
-        String(100)
-    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    country: Mapped[str] = mapped_column(
-        String(100)
-    )
+    name: Mapped[str] = mapped_column(String(100))
 
-    founded: Mapped[int] = mapped_column(
-        Integer
-    )
+    country: Mapped[str] = mapped_column(String(100))
 
-    stadium: Mapped[str] = mapped_column(
-        String(100)
-    )
+    founded: Mapped[int] = mapped_column(Integer)
 
-    trophies: Mapped[int] = mapped_column(
-        Integer,
-        default=0
-    )
+    stadium: Mapped[str] = mapped_column(String(100))
+
+    trophies: Mapped[int] = mapped_column(Integer, default=0)
+

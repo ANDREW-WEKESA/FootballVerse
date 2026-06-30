@@ -4,30 +4,17 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .base import Base
 
 class Player(Base):
-__tablename__ = "players"
-    id: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True
-    )
+    __tablename__ = "players"
 
-    name: Mapped[str] = mapped_column(
-        String(100)
-    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    country: Mapped[str] = mapped_column(
-        String(100)
-    )
+    name: Mapped[str] = mapped_column(String(100))
 
-    position: Mapped[str] = mapped_column(
-        String(50)
-    )
+    country: Mapped[str] = mapped_column(String(100))
 
-    goals: Mapped[int] = mapped_column(
-        Integer,
-        default=0
-    )
+    position: Mapped[str] = mapped_column(String(50))
 
-    trophies: Mapped[int] = mapped_column(
-        Integer,
-        default=0
-    )
+    goals: Mapped[int] = mapped_column(Integer, default=0)
+
+    trophies: Mapped[int] = mapped_column(Integer, default=0)
+
