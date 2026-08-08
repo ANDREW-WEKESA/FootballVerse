@@ -1,7 +1,7 @@
-__pycache__/
-*.pyc
-venv/
+backend/venv/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/footballverse.db
+frontend/node_modules/
+frontend/dist/
 .env
-dist/
-build/
-node_modules/
