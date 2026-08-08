@@ -1,12 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from .database import stories, players, clubs, media, scenes
+from sqlalchemy.orm import Session
+from .database import SessionLocal, Player
 
-competitions = []
-achievements = []
-player_profiles = []
-
-app = FastAPI(title="FootballVerse Full System", version="1.2.0")
+app = FastAPI(title="FootballVerse Full System", version="1.3.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,63 +13,52 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 @app.get("/")
 def home():
-    return {"system": "FootballVerse", "status": "running", "version": "1.2.0"}
-
-@app.get("/stories")
-def all_stories():
-    return stories
-
-@app.post("/stories")
-def create_story(story: dict):
-    stories.append(story)
-    return story
+    return {
+        "system": "FootballVerse",
+        "status": "running",
+        "version": "1.3.0"
+    }
 
 @app.get("/players")
-def all_players():
-    return players
+def all_players(db: Session = Depends(get_db)):
+    return db.query(Player).all()
 
 @app.get("/players/{player_id}")
-def player_profile(player_id: int):
-    if player_id < len(player_profiles):
-        return player_profiles[player_id]
-    return {"id": player_id, "message": "Player profile not found"}
+def get_player(player_id: int, db: Session = Depends(get_db)):
+    player = db.query(Player).filter(Player.id == player_id).first()
 
-@app.post("/players")
-def create_player(player: dict):
-    player["id"] = len(player_profiles)
-    player_profiles.append(player)
+    if not player:
+        return {"error": "Player not found"}
+
     return player
 
-@app.get("/clubs")
-def all_clubs():
-    return clubs
+@app.post("/players")
+def create_player(player: dict, db: Session = Depends(get_db)):
+    new_player = Player(
+        full_name=player.get("full_name", ""),
+        nationality=player.get("nationality", ""),
+        date_of_birth=player.get("date_of_birth", ""),
+        position=player.get("position", ""),
+        biography=player.get("biography", ""),
+        career_summary=player.get("career_summary", ""),
+        international_career=player.get("international_career", ""),
+        goals=player.get("goals", 0),
+        appearances=player.get("appearances", 0),
+        assists=player.get("assists", 0),
+        trophies=player.get("trophies", 0)
+    )
 
-@app.get("/competitions")
-def all_competitions():
-    return competitions
+    db.add(new_player)
+    db.commit()
+    db.refresh(new_player)
 
-@app.post("/competitions")
-def create_competition(competition: dict):
-    competition["id"] = len(competitions)
-    competitions.append(competition)
-    return competition
-
-@app.get("/achievements")
-def all_achievements():
-    return achievements
-
-@app.post("/achievements")
-def create_achievement(achievement: dict):
-    achievement["id"] = len(achievements)
-    achievements.append(achievement)
-    return achievement
-
-@app.get("/media")
-def all_media():
-    return media
-
-@app.get("/stories/{story_id}/scenes")
-def story_scenes(story_id: int):
-    return scenes
+    return new_player
