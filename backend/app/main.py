@@ -4,8 +4,9 @@ from .database import stories, players, clubs, media, scenes
 
 competitions = []
 achievements = []
+player_profiles = []
 
-app = FastAPI(title="FootballVerse Full System", version="1.1.0")
+app = FastAPI(title="FootballVerse Full System", version="1.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,11 +18,7 @@ app.add_middleware(
 
 @app.get("/")
 def home():
-    return {
-        "system": "FootballVerse",
-        "status": "running",
-        "version": "1.1.0"
-    }
+    return {"system": "FootballVerse", "status": "running", "version": "1.2.0"}
 
 @app.get("/stories")
 def all_stories():
@@ -36,6 +33,18 @@ def create_story(story: dict):
 def all_players():
     return players
 
+@app.get("/players/{player_id}")
+def player_profile(player_id: int):
+    if player_id < len(player_profiles):
+        return player_profiles[player_id]
+    return {"id": player_id, "message": "Player profile not found"}
+
+@app.post("/players")
+def create_player(player: dict):
+    player["id"] = len(player_profiles)
+    player_profiles.append(player)
+    return player
+
 @app.get("/clubs")
 def all_clubs():
     return clubs
@@ -46,6 +55,7 @@ def all_competitions():
 
 @app.post("/competitions")
 def create_competition(competition: dict):
+    competition["id"] = len(competitions)
     competitions.append(competition)
     return competition
 
@@ -55,6 +65,7 @@ def all_achievements():
 
 @app.post("/achievements")
 def create_achievement(achievement: dict):
+    achievement["id"] = len(achievements)
     achievements.append(achievement)
     return achievement
 
