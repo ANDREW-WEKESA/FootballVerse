@@ -1,0 +1,117 @@
+:root {
+  font-family: Inter, system-ui, sans-serif;
+  color: #f5f5f5;
+  background: #07110b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: linear-gradient(135deg, #07110b, #102719);
+}
+
+.app { min-height: 100vh; }
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28px 6%;
+  border-bottom: 1px solid #284531;
+}
+
+header h1 { margin: 0; font-size: 2rem; }
+header p { color: #a9b7ad; margin-bottom: 0; }
+
+.status {
+  color: #65e572;
+  font-size: .8rem;
+  font-weight: bold;
+}
+
+main {
+  width: min(1200px, 90%);
+  margin: auto;
+  padding: 40px 0;
+}
+
+.hero {
+  padding: 50px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #12351d, #0c1e13);
+  border: 1px solid #2b5a36;
+  margin-bottom: 30px;
+}
+
+.hero h2 { font-size: 2.5rem; margin-top: 0; }
+.hero p { max-width: 700px; color: #c0ccc4; line-height: 1.7; }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 50px;
+}
+
+.stats div {
+  padding: 24px;
+  background: #0d1d13;
+  border: 1px solid #23432c;
+  border-radius: 16px;
+}
+
+.stats strong {
+  display: block;
+  font-size: 2rem;
+  color: #72e582;
+}
+
+.stats span { color: #9cac9f; }
+
+section { margin-bottom: 45px; }
+
+section > h2 { margin-bottom: 18px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.card {
+  padding: 22px;
+  background: #0d1d13;
+  border: 1px solid #24472e;
+  border-radius: 16px;
+}
+
+.card h3 { margin-top: 10px; }
+.card p { color: #b7c2ba; line-height: 1.5; }
+.card small { color: #8fa194; }
+
+.tag {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: #1b4926;
+  color: #7bea8a;
+  font-size: .75rem;
+}
+
+.loading { color: #72e582; }
+
+footer {
+  padding: 30px;
+  text-align: center;
+  color: #78877c;
+  border-top: 1px solid #203b27;
+}
+
+@media (max-width: 700px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .hero { padding: 30px; }
+  .hero h2 { font-size: 2rem; }
+  header { flex-direction: column; align-items: flex-start; gap: 15px; }
+}
