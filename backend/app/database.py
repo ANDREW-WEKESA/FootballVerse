@@ -1,24 +1,36 @@
-stories=[
-{"id":1,"title":"Messi: The Boy From Rosario","category":"Legend"},
-{"id":2,"title":"Ronaldo: Madeira To The World","category":"Legend"}
-]
+from sqlalchemy import create_engine, String, Integer, Text
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
-players=[
-{"name":"Lionel Messi","position":"Forward"},
-{"name":"Cristiano Ronaldo","position":"Forward"}
-]
+DATABASE_URL = "sqlite:///./footballverse.db"
 
-clubs=[
-{"name":"Barcelona","country":"Spain"},
-{"name":"Real Madrid","country":"Spain"}
-]
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
 
-media=[
-{"name":"cover-image.jpg","type":"image"},
-{"name":"intro-video.mp4","type":"video"}
-]
+SessionLocal = sessionmaker(bind=engine)
 
-scenes=[
-{"story_id":1,"title":"Childhood","order":1},
-{"story_id":1,"title":"Barcelona Era","order":2}
-]
+class Base(DeclarativeBase):
+    pass
+
+class Player(Base):
+    __tablename__ = "players"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    full_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    nationality: Mapped[str] = mapped_column(String(100), default="")
+    date_of_birth: Mapped[str] = mapped_column(String(50), default="")
+    position: Mapped[str] = mapped_column(String(100), default="")
+    biography: Mapped[str] = mapped_column(Text, default="")
+    career_summary: Mapped[str] = mapped_column(Text, default="")
+    international_career: Mapped[str] = mapped_column(Text, default="")
+    goals: Mapped[int] = mapped_column(Integer, default=0)
+    appearances: Mapped[int] = mapped_column(Integer, default=0)
+    assists: Mapped[int] = mapped_column(Integer, default=0)
+    trophies: Mapped[int] = mapped_column(Integer, default=0)
+
+Base.metadata.create_all(engine)
+
+print("=== FOOTBALLVERSE DATABASE READY ===")
+print("Database: footballverse.db")
+print("Table: players")

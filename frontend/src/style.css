@@ -247,3 +247,101 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+.player-hero {
+  margin: 30px 0;
+  padding: 55px;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #123b1e, #091a0e);
+  border: 1px solid #2b5a36;
+}
+
+.player-hero h1 {
+  font-size: clamp(3rem, 7vw, 5rem);
+  margin: 15px 0 8px;
+}
+
+.player-hero p {
+  color: #aebbb1;
+  font-size: 1.1rem;
+}
+
+.profile-section {
+  padding: 30px;
+  margin-bottom: 25px;
+  border-radius: 18px;
+  background: #0c1b11;
+  border: 1px solid #23452c;
+}
+
+.profile-section p {
+  color: #aebbb1;
+  line-height: 1.8;
+}
+
+.player-card {
+  cursor: pointer;
+  transition: transform .2s, border-color .2s;
+}
+
+.player-card:hover {
+  transform: translateY(-4px);
+  border-color: #62df74;
+}
+
+.player-mini-stats {
+  display: flex;
+  gap: 15px;
+  margin: 18px 0;
+  color: #72e582;
+  font-size: .9rem;
+}
+
+.creator {
+  padding: 30px;
+  margin: 30px 0;
+  border-radius: 20px;
+  background: #0c1b11;
+  border: 1px solid #315d3b;
+}
+
+.creator form {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.creator label {
+  display: grid;
+  gap: 7px;
+  color: #aebbb1;
+  font-weight: 700;
+}
+
+.creator input,
+.creator textarea {
+  width: 100%;
+  padding: 13px;
+  border-radius: 9px;
+  border: 1px solid #31533a;
+  background: #06100a;
+  color: white;
+  font: inherit;
+}
+
+.secondary {
+  border: 1px solid #31533a;
+  background: #14291a;
+  color: #c6d4ca;
+  padding: 11px 16px;
+  border-radius: 9px;
+}
+
+@media (max-width: 700px) {
+  .player-hero {
+    padding: 35px 22px;
+  }
+
+  .player-mini-stats {
+    flex-direction: column;
+  }
+}

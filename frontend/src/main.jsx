@@ -6,212 +6,290 @@ const API = "http://127.0.0.1:8000";
 
 function App() {
   const [active, setActive] = useState("Home");
-  const [data, setData] = useState({
-    players: [],
-    clubs: [],
-    competitions: [],
-    achievements: [],
-    stories: []
+  const [players, setPlayers] = useState([]);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    country: "",
+    position: "",
+    biography: "",
+    goals: 0,
+    trophies: 0
   });
 
-  const load = async () => {
+  const loadPlayers = async () => {
     try {
-      const endpoints = ["players", "clubs", "competitions", "achievements", "stories"];
-      const results = await Promise.all(
-        endpoints.map(x => fetch(`${API}/${x}`).then(r => r.json()))
-      );
-
-      setData({
-        players: results[0],
-        clubs: results[1],
-        competitions: results[2],
-        achievements: results[3],
-        stories: results[4]
-      });
+      const response = await fetch(`${API}/players`);
+      setPlayers(await response.json());
     } catch (e) {
-      console.error("FootballVerse API:", e);
+      console.error(e);
     }
   };
 
   useEffect(() => {
-    load();
+    loadPlayers();
   }, []);
 
-  const sections = {
-    Players: data.players,
-    Clubs: data.clubs,
-    Competitions: data.competitions,
-    Achievements: data.achievements,
-    Stories: data.stories
+  const createPlayer = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch(`${API}/players`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          ...form,
+          goals: Number(form.goals),
+          trophies: Number(form.trophies)
+        })
+      });
+
+      if (!response.ok) throw new Error("Could not create player");
+
+      setForm({
+        name: "",
+        country: "",
+        position: "",
+        biography: "",
+        goals: 0,
+        trophies: 0
+      });
+
+      setShowCreate(false);
+      loadPlayers();
+    } catch (e) {
+      alert(e.message);
+    }
   };
+
+  if (selectedPlayer) {
+    return (
+      <div className="app">
+        <nav>
+          <div className="logo" onClick={() => setSelectedPlayer(null)}>
+            ? FootballVerse
+          </div>
+        </nav>
+
+        <main>
+          <button className="secondary" onClick={() => setSelectedPlayer(null)}>
+            ? Back to Players
+          </button>
+
+          <section className="player-hero">
+            <span className="tag">FOOTBALLVERSE PLAYER</span>
+            <h1>{selectedPlayer.name}</h1>
+            <p>
+              {selectedPlayer.country} · {selectedPlayer.position}
+            </p>
+          </section>
+
+          <section className="stats">
+            <div>
+              <strong>{selectedPlayer.goals ?? 0}</strong>
+              <span>Goals</span>
+            </div>
+
+            <div>
+              <strong>{selectedPlayer.trophies ?? 0}</strong>
+              <span>Trophies</span>
+            </div>
+
+            <div>
+              <strong>{selectedPlayer.country || "—"}</strong>
+              <span>Country</span>
+            </div>
+
+            <div>
+              <strong>{selectedPlayer.position || "—"}</strong>
+              <span>Position</span>
+            </div>
+          </section>
+
+          <section className="profile-section">
+            <h2>?? About the Player</h2>
+            <p>
+              {selectedPlayer.biography ||
+                "FootballVerse biography coming soon."}
+            </p>
+          </section>
+
+          <section className="feature-grid">
+            <div>
+              <h3>? Career</h3>
+              <p>
+                Clubs, seasons, international career and major career events.
+              </p>
+            </div>
+
+            <div>
+              <h3>?? Achievements</h3>
+              <p>
+                Trophies, awards, records and historic accomplishments.
+              </p>
+            </div>
+
+            <div>
+              <h3>?? Timeline</h3>
+              <p>
+                Follow the most important moments throughout the player's life.
+              </p>
+            </div>
+
+            <div>
+              <h3>?? Animated Stories</h3>
+              <p>
+                Turn this player's football journey into animated episodes.
+              </p>
+            </div>
+          </section>
+        </main>
+
+        <footer>? FootballVerse · Football knowledge brought to life</footer>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
-
       <nav>
         <div className="logo" onClick={() => setActive("Home")}>
           ? FootballVerse
         </div>
 
         <div className="nav-links">
-          {["Home", "Players", "Clubs", "Competitions", "Achievements", "Stories", "Animation Studio"]
-            .map(item => (
-              <button
-                key={item}
-                className={active === item ? "active" : ""}
-                onClick={() => setActive(item)}
-              >
-                {item}
-              </button>
-            ))}
+          <button onClick={() => setActive("Home")}>Home</button>
+          <button className="active">Players</button>
+          <button onClick={() => setActive("Clubs")}>Clubs</button>
+          <button onClick={() => setActive("Competitions")}>Competitions</button>
+          <button onClick={() => setActive("Stories")}>Stories</button>
+          <button onClick={() => setActive("Animation Studio")}>
+            Animation Studio
+          </button>
         </div>
       </nav>
 
       <main>
+        <section className="page-heading">
+          <span className="tag">FOOTBALL KNOWLEDGE</span>
+          <h1>Players</h1>
+          <p>
+            Explore the people who made football history.
+          </p>
 
-        {active === "Home" && (
-          <>
-            <section className="hero">
-              <span className="tag">THE FOOTBALL KNOWLEDGE UNIVERSE</span>
-              <h1>Football has a story.</h1>
-              <h1>We bring it to life.</h1>
+          <button
+            className="primary"
+            onClick={() => setShowCreate(!showCreate)}
+          >
+            + Add Player
+          </button>
+        </section>
 
-              <p>
-                FootballVerse is a football knowledge and entertainment
-                platform where players, clubs, competitions, achievements
-                and historic moments become engaging stories and,
-                eventually, animated experiences.
-              </p>
+        {showCreate && (
+          <section className="creator">
+            <h2>Create Player Profile</h2>
 
-              <button className="primary" onClick={() => setActive("Players")}>
-                Explore Football ?
+            <form onSubmit={createPlayer}>
+              <label>
+                Player Name
+                <input
+                  required
+                  value={form.name}
+                  onChange={e => setForm({...form, name: e.target.value})}
+                  placeholder="Player name"
+                />
+              </label>
+
+              <label>
+                Country
+                <input
+                  value={form.country}
+                  onChange={e => setForm({...form, country: e.target.value})}
+                  placeholder="Country"
+                />
+              </label>
+
+              <label>
+                Position
+                <input
+                  value={form.position}
+                  onChange={e => setForm({...form, position: e.target.value})}
+                  placeholder="Forward, Midfielder, Defender..."
+                />
+              </label>
+
+              <label>
+                Biography
+                <textarea
+                  rows="5"
+                  value={form.biography}
+                  onChange={e => setForm({...form, biography: e.target.value})}
+                  placeholder="Player biography..."
+                />
+              </label>
+
+              <label>
+                Goals
+                <input
+                  type="number"
+                  min="0"
+                  value={form.goals}
+                  onChange={e => setForm({...form, goals: e.target.value})}
+                />
+              </label>
+
+              <label>
+                Trophies
+                <input
+                  type="number"
+                  min="0"
+                  value={form.trophies}
+                  onChange={e => setForm({...form, trophies: e.target.value})}
+                />
+              </label>
+
+              <button className="primary" type="submit">
+                Save Player
               </button>
-            </section>
-
-            <section className="stats">
-              <div><strong>{data.players.length}</strong><span>Players</span></div>
-              <div><strong>{data.clubs.length}</strong><span>Clubs</span></div>
-              <div><strong>{data.competitions.length}</strong><span>Competitions</span></div>
-              <div><strong>{data.stories.length}</strong><span>Stories</span></div>
-            </section>
-
-            <section className="vision">
-              <h2>?? More than statistics.</h2>
-              <p>
-                Learn football history through stories, timelines,
-                achievements, memorable moments, humor and animation.
-              </p>
-
-              <div className="feature-grid">
-                <div>
-                  <h3>?? Knowledge</h3>
-                  <p>Discover the people, clubs and events that shaped football.</p>
-                </div>
-
-                <div>
-                  <h3>?? Stories</h3>
-                  <p>Turn important football moments into compelling stories.</p>
-                </div>
-
-                <div>
-                  <h3>?? Animation</h3>
-                  <p>Experience football stories through stylized animated content.</p>
-                </div>
-
-                <div>
-                  <h3>??????????? Every Generation</h3>
-                  <p>Content designed to be enjoyable for children, teenagers and adults.</p>
-                </div>
-              </div>
-            </section>
-          </>
-        )}
-
-        {active !== "Home" && active !== "Animation Studio" && (
-          <section>
-            <div className="page-heading">
-              <span className="tag">{active.toUpperCase()}</span>
-              <h1>{active}</h1>
-              <p>Explore the FootballVerse knowledge universe.</p>
-            </div>
-
-            <div className="grid">
-              {(sections[active] || []).map((item, index) => (
-                <article className="card" key={item.id ?? index}>
-                  <span className="tag">{active}</span>
-                  <h3>
-                    {item.name || item.title || item.player || "Football Item"}
-                  </h3>
-
-                  <p>
-                    {item.description ||
-                     item.country ||
-                     item.position ||
-                     "Football knowledge coming soon."}
-                  </p>
-
-                  {item.goals !== undefined && (
-                    <small>? Goals: {item.goals}</small>
-                  )}
-
-                  {item.trophies !== undefined && (
-                    <small> ?? Trophies: {item.trophies}</small>
-                  )}
-                </article>
-              ))}
-
-              {(!sections[active] || sections[active].length === 0) && (
-                <div className="empty">
-                  <h2>Nothing here yet.</h2>
-                  <p>
-                    This section is ready for FootballVerse data.
-                    We will build it step by step.
-                  </p>
-                </div>
-              )}
-            </div>
+            </form>
           </section>
         )}
 
-        {active === "Animation Studio" && (
-          <section className="studio">
-            <span className="tag">COMING NEXT</span>
-            <h1>?? Animation Studio</h1>
+        <div className="grid">
+          {players.map((player, index) => (
+            <article
+              className="card player-card"
+              key={player.id ?? index}
+              onClick={() => setSelectedPlayer(player)}
+            >
+              <span className="tag">PLAYER</span>
+              <h2>{player.name}</h2>
+              <p>{player.country} · {player.position}</p>
 
-            <p>
-              This will become the creative engine of FootballVerse.
-            </p>
-
-            <div className="feature-grid">
-              <div>
-                <h3>?? Cartoon Characters</h3>
-                <p>Stylized characters for football storytelling.</p>
+              <div className="player-mini-stats">
+                <span>? {player.goals ?? 0} goals</span>
+                <span>?? {player.trophies ?? 0} trophies</span>
               </div>
 
-              <div>
-                <h3>??? Narration</h3>
-                <p>Turn written stories into narrated experiences.</p>
-              </div>
+              <button className="secondary">
+                View Profile ?
+              </button>
+            </article>
+          ))}
 
-              <div>
-                <h3>??? Scenes</h3>
-                <p>Build stories scene by scene.</p>
-              </div>
-
-              <div>
-                <h3>?? Humor</h3>
-                <p>Make football history entertaining for every generation.</p>
-              </div>
+          {!players.length && (
+            <div className="empty">
+              <h2>No players yet</h2>
+              <p>Add the first player to the FootballVerse knowledge base.</p>
             </div>
-          </section>
-        )}
-
+          )}
+        </div>
       </main>
 
       <footer>
         ? FootballVerse · Football knowledge brought to life
       </footer>
-
     </div>
   );
 }
