@@ -1,5 +1,1 @@
-{
-"name":"footballverse",
-"scripts":{"dev":"vite"},
-"dependencies":{"react":"latest","react-dom":"latest","vite":"latest"}
-}
+{"name":"footballverse","scripts":{"dev":"vite","build":"vite build","preview":"vite preview"},"dependencies":{"react":"latest","react-dom":"latest","react-router-dom":"^7.18.2","vite":"latest"}}

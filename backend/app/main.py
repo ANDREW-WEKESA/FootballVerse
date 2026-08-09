@@ -8,6 +8,7 @@ from .database import (
     Player,
     PlayerSeasonStat,
     PlayerHonour,
+PlayerGoal,
     SessionLocal,
 )
 
@@ -430,3 +431,207 @@ def player_story(
         "event_count": len(events),
     }
 
+
+
+@app.get("/players/{player_id}/goals")
+def get_player_goals(
+    player_id: int,
+    db: Session = Depends(get_db),
+):
+    player = db.query(Player).filter(Player.id == player_id).first()
+
+    if not player:
+        raise HTTPException(
+            status_code=404,
+            detail="Player not found",
+        )
+
+    goals = (
+        db.query(PlayerGoal)
+        .filter(PlayerGoal.player_id == player_id)
+        .order_by(PlayerGoal.date, PlayerGoal.goal_number)
+        .all()
+    )
+
+    return {
+        "player": player,
+        "goal_count": len(goals),
+        "goals": goals,
+    }
+
+
+@app.post("/players/{player_id}/goals")
+def add_player_goal(
+    player_id: int,
+    goal: dict,
+    db: Session = Depends(get_db),
+):
+    player = db.query(Player).filter(Player.id == player_id).first()
+
+    if not player:
+        raise HTTPException(
+            status_code=404,
+            detail="Player not found",
+        )
+
+    new_goal = PlayerGoal(
+        player_id=player_id,
+        goal_number=goal.get("goal_number", 0),
+        date=goal.get("date", ""),
+        season=goal.get("season", ""),
+        team=goal.get("team", ""),
+        opponent=goal.get("opponent", ""),
+        competition=goal.get("competition", ""),
+        minute=goal.get("minute", ""),
+        score=goal.get("score", ""),
+        goal_type=goal.get("goal_type", ""),
+        description=goal.get("description", ""),
+        video_url=goal.get("video_url", ""),
+        source_url=goal.get("source_url", ""),
+        evidence_type=goal.get("evidence_type", ""),
+        verified=goal.get("verified", False),
+    )
+
+    db.add(new_goal)
+    db.commit()
+    db.refresh(new_goal)
+
+    return new_goal
+
+
+@app.delete("/players/{player_id}/goals/{goal_id}")
+def delete_player_goal(
+    player_id: int,
+    goal_id: int,
+    db: Session = Depends(get_db),
+):
+    goal = (
+        db.query(PlayerGoal)
+        .filter(
+            PlayerGoal.id == goal_id,
+            PlayerGoal.player_id == player_id,
+        )
+        .first()
+    )
+
+    if not goal:
+        raise HTTPException(
+            status_code=404,
+            detail="Goal not found",
+        )
+
+    db.delete(goal)
+    db.commit()
+
+    return {
+        "status": "deleted",
+        "goal_id": goal_id,
+    }
+
+
+@app.put("/players/{player_id}/goals/{goal_id}/evidence")
+def update_goal_evidence(
+    player_id: int,
+    goal_id: int,
+    evidence: dict,
+    db: Session = Depends(get_db),
+):
+    goal = (
+        db.query(PlayerGoal)
+        .filter(
+            PlayerGoal.id == goal_id,
+            PlayerGoal.player_id == player_id,
+        )
+        .first()
+    )
+
+    if not goal:
+        raise HTTPException(
+            status_code=404,
+            detail="Goal not found",
+        )
+
+    goal.video_url = evidence.get("video_url", goal.video_url)
+    goal.source_url = evidence.get("source_url", goal.source_url)
+    goal.evidence_type = evidence.get(
+        "evidence_type",
+        goal.evidence_type,
+    )
+    goal.youtube_video_id = evidence.get(
+        "youtube_video_id",
+        goal.youtube_video_id,
+    )
+    goal.youtube_timestamp = evidence.get(
+        "youtube_timestamp",
+        goal.youtube_timestamp,
+    )
+    goal.youtube_channel = evidence.get(
+        "youtube_channel",
+        goal.youtube_channel,
+    )
+    goal.youtube_title = evidence.get(
+        "youtube_title",
+        goal.youtube_title,
+    )
+    goal.evidence_notes = evidence.get(
+        "evidence_notes",
+        goal.evidence_notes,
+    )
+
+    if "verified" in evidence:
+        goal.verified = bool(evidence["verified"])
+
+    db.commit()
+    db.refresh(goal)
+
+    return goal
+
+@app.get("/players/{player_id}/goals/{goal_id}/evidence")
+def get_goal_evidence(
+    player_id: int,
+    goal_id: int,
+    db: Session = Depends(get_db),
+):
+    goal = (
+        db.query(PlayerGoal)
+        .filter(
+            PlayerGoal.id == goal_id,
+            PlayerGoal.player_id == player_id,
+        )
+        .first()
+    )
+
+    if not goal:
+        raise HTTPException(
+            status_code=404,
+            detail="Goal not found",
+        )
+
+    return {
+        "goal_id": goal.id,
+        "player_id": goal.player_id,
+        "goal_number": goal.goal_number,
+        "match": {
+            "date": goal.date,
+            "season": goal.season,
+            "team": goal.team,
+            "opponent": goal.opponent,
+            "competition": goal.competition,
+            "minute": goal.minute,
+            "score": goal.score,
+        },
+        "evidence": {
+            "type": goal.evidence_type,
+            "verified": goal.verified,
+            "video_url": goal.video_url,
+            "source_url": goal.source_url,
+            "youtube_video_id": goal.youtube_video_id,
+            "youtube_timestamp": goal.youtube_timestamp,
+            "youtube_channel": goal.youtube_channel,
+            "youtube_title": goal.youtube_title,
+            "notes": goal.evidence_notes,
+        },
+    }
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/videos", StaticFiles(directory="static/videos"), name="videos")

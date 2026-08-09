@@ -211,3 +211,111 @@ Base.metadata.create_all(engine)
 print("=== FOOTBALLVERSE DATABASE READY ===")
 print("Database: footballverse.db")
 print("Tables: players, player_season_stats, player_honours")
+
+class PlayerGoal(Base):
+    __tablename__ = "player_goals"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True
+    )
+
+    player_id: Mapped[int] = mapped_column(
+        ForeignKey("players.id"),
+        nullable=False,
+        index=True
+    )
+
+    goal_number: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+
+    date: Mapped[str] = mapped_column(
+        String(50),
+        default=""
+    )
+
+    season: Mapped[str] = mapped_column(
+        String(50),
+        default=""
+    )
+
+    team: Mapped[str] = mapped_column(
+        String(200),
+        default=""
+    )
+
+    opponent: Mapped[str] = mapped_column(
+        String(200),
+        default=""
+    )
+
+    competition: Mapped[str] = mapped_column(
+        String(200),
+        default=""
+    )
+
+    minute: Mapped[str] = mapped_column(
+        String(50),
+        default=""
+    )
+
+    score: Mapped[str] = mapped_column(
+        String(100),
+        default=""
+    )
+
+    goal_type: Mapped[str] = mapped_column(
+        String(100),
+        default=""
+    )
+
+    description: Mapped[str] = mapped_column(
+        Text,
+        default=""
+    )
+
+    video_url: Mapped[str] = mapped_column(
+        String(1000),
+        default=""
+    )
+
+    source_url: Mapped[str] = mapped_column(
+        String(1000),
+        default=""
+    )
+
+    evidence_type: Mapped[str] = mapped_column(
+        String(100),
+        default=""
+    )
+
+    verified: Mapped[bool] = mapped_column(
+        default=False
+    )
+
+    youtube_video_id: Mapped[str] = mapped_column(
+        String(100),
+        default=""
+    )
+
+    youtube_timestamp: Mapped[str] = mapped_column(
+        String(50),
+        default=""
+    )
+
+    youtube_channel: Mapped[str] = mapped_column(
+        String(200),
+        default=""
+    )
+
+    youtube_title: Mapped[str] = mapped_column(
+        String(500),
+        default=""
+    )
+
+    evidence_notes: Mapped[str] = mapped_column(
+        Text,
+        default=""
+    )
