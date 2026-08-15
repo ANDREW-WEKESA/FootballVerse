@@ -1,5 +1,6 @@
 ﻿import logging
 import os
+import asyncio
 
 from fastapi import FastAPI, Depends, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +17,7 @@ from .database import (
     PlayerHonour,
     PlayerSeasonStat,
     Story,
+    SessionLocal,
     engine,
 )
 from .auth import (
@@ -26,6 +28,7 @@ from .auth import (
     get_optional_current_user,
     get_user_by_email,
     verify_password,
+    _executor,
 )
 from .services.thesportsdb import (
     get_player_honours,
@@ -38,10 +41,22 @@ logger = logging.getLogger(__name__)
 
 Base.metadata.create_all(engine)
 
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app):
+    db = SessionLocal()
+    try:
+        ensure_admin_exists(db)
+    finally:
+        db.close()
+    yield
+
 app = FastAPI(
     title="FootballVerse API",
     version="2.0.0",
     description="Football knowledge and storytelling platform API",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -58,15 +73,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-def on_startup():
-    db = next(get_db())
-    try:
-        ensure_admin_exists(db)
-    finally:
-        db.close()
 
 
 # ---------------------------------------------------------------------------
@@ -157,11 +163,16 @@ def home():
 # ---------------------------------------------------------------------------
 
 @app.post("/auth/login", tags=["auth"], summary="Admin login — returns JWT")
-def login(body: LoginRequest, db: Session = Depends(get_db)):
+async def login(body: LoginRequest, db: Session = Depends(get_db)):
     if len(body.email) > 254 or len(body.password) > 72:
         raise HTTPException(status_code=400, detail="Invalid credentials")
     user = get_user_by_email(db, body.email)
-    if not user or not verify_password(body.password, user.hashed_password):
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    # Run bcrypt in thread pool so it doesn't block the event loop
+    loop = asyncio.get_event_loop()
+    ok = await loop.run_in_executor(_executor, verify_password, body.password, user.hashed_password)
+    if not ok:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token(user.email)
     return {"access_token": token, "token_type": "bearer"}

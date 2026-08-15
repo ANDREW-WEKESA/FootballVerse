@@ -1,11 +1,12 @@
 import os
 import logging
 from datetime import datetime, timedelta, timezone
+from concurrent.futures import ThreadPoolExecutor
 
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from .database import SessionLocal, User
@@ -16,20 +17,25 @@ JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
 bearer_scheme = HTTPBearer(auto_error=False)
+
+# ThreadPoolExecutor so bcrypt never blocks the async event loop
+_executor = ThreadPoolExecutor(max_workers=4)
 
 
 # ---------------------------------------------------------------------------
-# Password helpers
+# Password helpers — sync versions (called from thread pool in endpoints)
 # ---------------------------------------------------------------------------
 
 def hash_password(plain: str) -> str:
-    return pwd_context.hash(plain[:72])
+    return bcrypt.hashpw(plain[:72].encode(), bcrypt.gensalt(rounds=12)).decode()
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain[:72], hashed)
+    try:
+        return bcrypt.checkpw(plain[:72].encode(), hashed.encode())
+    except Exception:
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -139,4 +145,10 @@ def ensure_admin_exists(db: Session):
         db.commit()
         logger.info("Admin user created: %s", admin_email)
     else:
-        logger.info("Admin user already exists: %s", admin_email)
+        # Re-hash if stored hash is incompatible (e.g. passlib migration)
+        if not verify_password(admin_password, existing.hashed_password):
+            existing.hashed_password = hash_password(admin_password)
+            db.commit()
+            logger.info("Admin password re-hashed: %s", admin_email)
+        else:
+            logger.info("Admin user already exists: %s", admin_email)

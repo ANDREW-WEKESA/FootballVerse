@@ -12,6 +12,7 @@ from sqlalchemy import (
     JSON,
     DateTime,
 )
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from sqlalchemy.sql import func
 from dotenv import load_dotenv
@@ -26,17 +27,13 @@ if not DATABASE_URL:
     logger.error("DATABASE_URL environment variable is not set. Exiting.")
     sys.exit(1)
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, poolclass=NullPool)
 
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine,
 )
-
-
-class Base(DeclarativeBase):
-    pass
 
 
 # ---------------------------------------------------------------------------
