@@ -372,6 +372,86 @@ def render_story(
         raise HTTPException(status_code=500, detail=f"Render failed: {str(e)}")
 
 
+@app.post("/stories/{story_id}/render/enhanced", tags=["stories"], summary="Render enhanced cinematic episode (admin)")
+def render_enhanced_story(
+    story_id: int,
+    format: str = Query("episode", regex="^(reel|episode)$"),
+    db: Session = Depends(get_db),
+    _admin=Depends(get_current_admin),
+):
+    """
+    Render enhanced cinematic video with better animations and storytelling
+    
+    - **format**: "reel" for short 15-60s social media clips, "episode" for full 3-5min documentaries
+    """
+    from .services.enhanced_video_renderer import EnhancedVideoRenderer
+    import sys
+    sys.path.append("backend")
+    from enhanced_messi_scripts import get_enhanced_script
+    
+    story = db.query(Story).filter(Story.id == story_id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    if story.status not in ["draft", "rendered"]:
+        raise HTTPException(status_code=409, detail="Story cannot be re-rendered")
+    
+    try:
+        renderer = EnhancedVideoRenderer()
+        
+        # Try to get enhanced script
+        story_keys = {
+            2: "messi_getafe_2007",
+            5: "messi_boateng_2015",
+            6: "messi_91_goals",
+            9: "messi_world_cup_2022"
+        }
+        
+        story_key = story_keys.get(story_id)
+        
+        if format == "reel":
+            # Render short reel
+            result = renderer.render_short_reel(
+                story_id=story.id,
+                title=story.title,
+                script=story.script or ""
+            )
+        else:
+            # Render full episode with chapters
+            if story_key:
+                enhanced = get_enhanced_script(story_key)
+                result = renderer.render_full_episode(
+                    story_id=story.id,
+                    title=enhanced['title'],
+                    chapters=enhanced['chapters'],
+                    stats=enhanced.get('stats', [])
+                )
+            else:
+                # Fallback to simple episode
+                result = renderer.render_short_reel(
+                    story_id=story.id,
+                    title=story.title,
+                    script=story.script or ""
+                )
+        
+        # Update story
+        story.render_output_path = result["output_path"]
+        story.status = "rendered"
+        db.commit()
+        
+        return {
+            "status": "success",
+            "story_id": story_id,
+            "format": result.get("format", format),
+            "output_path": result["output_path"],
+            "duration_seconds": result["duration"],
+            "file_size_mb": result["file_size_mb"],
+            "chapters": result.get("chapters", 1)
+        }
+    except Exception as e:
+        logger.error(f"Enhanced render failed for story {story_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Render failed: {str(e)}")
+
+
 @app.get("/stories/{story_id}/download", tags=["stories"], summary="Download rendered video")
 def download_story(story_id: int, db: Session = Depends(get_db)):
     story = db.query(Story).filter(Story.id == story_id).first()
