@@ -339,13 +339,37 @@ def render_story(
     db: Session = Depends(get_db),
     _admin=Depends(get_current_admin),
 ):
+    from .services.video_renderer import VideoRenderer
+    
     story = db.query(Story).filter(Story.id == story_id).first()
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
     if story.status != "draft":
         raise HTTPException(status_code=409, detail="Only draft stories can be rendered")
-    # Pipeline wired in Phase 3 — placeholder returns accepted
-    return {"status": "accepted", "story_id": story_id, "message": "Render pipeline coming in Phase 3"}
+    
+    try:
+        renderer = VideoRenderer()
+        result = renderer.render_story(
+            story_id=story.id,
+            title=story.title,
+            script=story.script or ""
+        )
+        
+        # Update story with render output
+        story.render_output_path = result["output_path"]
+        story.status = "rendered"
+        db.commit()
+        
+        return {
+            "status": "success",
+            "story_id": story_id,
+            "output_path": result["output_path"],
+            "duration_seconds": result["duration"],
+            "file_size_mb": result["file_size_mb"]
+        }
+    except Exception as e:
+        logger.error(f"Render failed for story {story_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Render failed: {str(e)}")
 
 
 @app.get("/stories/{story_id}/download", tags=["stories"], summary="Download rendered video")
