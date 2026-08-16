@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, field_validator, model_validator
 from sqlalchemy.orm import Session
+from alembic import command
+from alembic.config import Config
 
 from .database import (
     Base,
@@ -39,16 +41,20 @@ from .services.thesportsdb import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-Base.metadata.create_all(engine)
-
 
 @asynccontextmanager
 async def lifespan(app):
+    # Check if database is migrated (optional check, non-blocking)
+    logger.info("FootballVerse API starting up...")
+    logger.info("Note: Run 'python migrate.py upgrade' to ensure database is up to date")
+    
+    # Ensure admin user exists
     db = SessionLocal()
     try:
         ensure_admin_exists(db)
     finally:
         db.close()
+    
     yield
 
 app = FastAPI(

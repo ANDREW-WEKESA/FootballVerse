@@ -1,0 +1,6 @@
+{
+  "specVersion": "0.2.0",
+  "title": "FootballVerse Completion - Priorities 1-4",
+  "description": "Complete remaining MVP features: Alembic migrations, video rendering pipeline, frontend UI, and API documentation",
+  "status": "draft"
+}
