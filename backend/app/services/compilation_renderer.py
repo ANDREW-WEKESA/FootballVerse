@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from moviepy.editor import (
     VideoFileClip, ImageClip, AudioFileClip, 
-    concatenate_videoclips, CompositeVideoClip, TextClip
+    concatenate_videoclips, CompositeVideoClip
 )
 
 from .tts_service import TTSService
@@ -141,17 +141,30 @@ class CompilationRenderer:
                     slowmo_clip = goal_video.subclip(slowmo_start, goal_video.duration)
                     slowmo_clip = slowmo_clip.fx(lambda clip: clip.speedx(0.5))  # 50% speed
                     
-                    # Add "REPLAY" text overlay
-                    txt = TextClip(
-                        "REPLAY",
-                        fontsize=80,
-                        color='white',
-                        font='Arial-Bold',
-                        stroke_color='black',
-                        stroke_width=2
-                    ).set_position(('right', 'top')).set_duration(slowmo_clip.duration)
+                    # Add "REPLAY" text overlay using ImageClip instead
+                    from PIL import Image, ImageDraw, ImageFont
                     
-                    slowmo_with_text = CompositeVideoClip([slowmo_clip, txt])
+                    # Create replay text image
+                    replay_img = Image.new('RGBA', (300, 100), (0, 0, 0, 0))
+                    draw = ImageDraw.Draw(replay_img)
+                    
+                    try:
+                        font = ImageFont.truetype("arialbd.ttf", 60)
+                    except:
+                        font = ImageFont.load_default()
+                    
+                    # Draw text with shadow
+                    draw.text((4, 4), "REPLAY", fill=(0, 0, 0, 200), font=font)
+                    draw.text((2, 2), "REPLAY", fill=(255, 255, 255, 255), font=font)
+                    
+                    # Save temp image
+                    replay_img_path = self.temp_dir / f"replay_{story_id}_{idx}.png"
+                    replay_img.save(replay_img_path)
+                    
+                    # Create overlay clip
+                    txt_clip = ImageClip(str(replay_img_path)).set_duration(slowmo_clip.duration).set_position(('right', 'top'))
+                    
+                    slowmo_with_text = CompositeVideoClip([slowmo_clip, txt_clip])
                     all_clips.append(slowmo_with_text)
             
             # 4. End card (3 seconds)
