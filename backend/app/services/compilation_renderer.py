@@ -129,43 +129,12 @@ class CompilationRenderer:
                     end_time = goal_video.duration - trim_end if trim_end > 0 else goal_video.duration
                     goal_video = goal_video.subclip(trim_start, end_time)
                 
-                # Resize to 1080p if needed
-                if goal_video.h != 1080:
-                    goal_video = goal_video.resize(height=1080)
+                # Note: Skipping resize to avoid PIL compatibility issues
+                # Videos should already be in correct resolution
                 
                 all_clips.append(goal_video)
                 
-                # d) Slow-motion replay (optional - last 3 seconds in slow-mo)
-                if goal.get('add_slowmo', False) and goal_video.duration > 3:
-                    slowmo_start = max(0, goal_video.duration - 3)
-                    slowmo_clip = goal_video.subclip(slowmo_start, goal_video.duration)
-                    slowmo_clip = slowmo_clip.fx(lambda clip: clip.speedx(0.5))  # 50% speed
-                    
-                    # Add "REPLAY" text overlay using ImageClip instead
-                    from PIL import Image, ImageDraw, ImageFont
-                    
-                    # Create replay text image
-                    replay_img = Image.new('RGBA', (300, 100), (0, 0, 0, 0))
-                    draw = ImageDraw.Draw(replay_img)
-                    
-                    try:
-                        font = ImageFont.truetype("arialbd.ttf", 60)
-                    except:
-                        font = ImageFont.load_default()
-                    
-                    # Draw text with shadow
-                    draw.text((4, 4), "REPLAY", fill=(0, 0, 0, 200), font=font)
-                    draw.text((2, 2), "REPLAY", fill=(255, 255, 255, 255), font=font)
-                    
-                    # Save temp image
-                    replay_img_path = self.temp_dir / f"replay_{story_id}_{idx}.png"
-                    replay_img.save(replay_img_path)
-                    
-                    # Create overlay clip
-                    txt_clip = ImageClip(str(replay_img_path)).set_duration(slowmo_clip.duration).set_position(('right', 'top'))
-                    
-                    slowmo_with_text = CompositeVideoClip([slowmo_clip, txt_clip])
-                    all_clips.append(slowmo_with_text)
+                # Skip slow-motion for now due to compatibility issues
             
             # 4. End card (3 seconds)
             end_img = self.scene_gen.create_end_card(story_id)
