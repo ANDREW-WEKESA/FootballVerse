@@ -452,6 +452,71 @@ def render_enhanced_story(
         raise HTTPException(status_code=500, detail=f"Render failed: {str(e)}")
 
 
+class GoalCompilationRequest(BaseModel):
+    title: str
+    goals: list[dict]
+
+
+@app.post("/videos/compile", tags=["videos"], summary="Create goal compilation from real footage (admin)")
+def create_compilation(
+    body: GoalCompilationRequest,
+    story_id: int = Query(default=999, description="Story ID for tracking"),
+    _admin=Depends(get_current_admin),
+):
+    """
+    Create a compilation video from real goal footage with AI narration
+    
+    **Request body:**
+    ```json
+    {
+        "title": "Messi's Top 3 Solo Goals",
+        "goals": [
+            {
+                "clip_path": "static/videos/clips/messi_getafe_2007.mp4",
+                "title": "vs Getafe 2007",
+                "narration": "April 18, 2007. The goal that made the world notice.",
+                "trim_start": 2,
+                "trim_end": 1,
+                "add_slowmo": true
+            },
+            {
+                "clip_path": "static/videos/clips/messi_bilbao_2015.mp4",
+                "title": "Copa Final 2015",
+                "narration": "A 70-meter solo run to win the trophy.",
+                "add_slowmo": true
+            }
+        ]
+    }
+    ```
+    
+    **Before using:**
+    1. Download goal clips using: `python backend/compile_goals.py --download <URL> <name>`
+    2. Clips should be in: `backend/static/videos/clips/`
+    3. Then call this endpoint with clip paths and narration
+    """
+    from .services.compilation_renderer import CompilationRenderer
+    
+    try:
+        renderer = CompilationRenderer()
+        result = renderer.render_goal_compilation(
+            story_id=story_id,
+            title=body.title,
+            goals=body.goals
+        )
+        
+        return {
+            "status": "success",
+            "compilation_id": story_id,
+            "output_path": result["output_path"],
+            "duration_seconds": result["duration"],
+            "file_size_mb": result["file_size_mb"],
+            "goals_count": result["goals_count"]
+        }
+    except Exception as e:
+        logger.error(f"Compilation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Compilation failed: {str(e)}")
+
+
 @app.get("/stories/{story_id}/download", tags=["stories"], summary="Download rendered video")
 def download_story(story_id: int, db: Session = Depends(get_db)):
     story = db.query(Story).filter(Story.id == story_id).first()
